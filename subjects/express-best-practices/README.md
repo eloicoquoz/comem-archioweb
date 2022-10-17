@@ -40,7 +40,7 @@ deploy in different environments. You may also uninentionally expose sensitive
 data such as secret keys.
 
 [Environment variables][node-process-env] are a suitable alternative. There is
-already an example in a freshly generated Express application in the `bin/www`
+already an example in a freshly generated Express application in the `bin/start.js`
 file:
 
 ```js
@@ -84,8 +84,8 @@ $> npm start
 
 > On a server or in a cloud environment, you want to edit the process manager's
 > or cloud platform's configuration for your application. For example, on
-> [Heroku][heroku], you can configure environment variables with the `heroku
-> config` subcommand, or in your application's settings web page.
+> [Render][render], you can configure environment variables in your application's
+> settings web page.
 
 ### Create a configuration file if you have many variables
 
@@ -94,8 +94,8 @@ centralize your configuration code in a single file, for example `config.js`:
 
 ```js
 // File: config.js
-exports.port = process.env.PORT || 3000;
-exports.secretKey = process.env.MY_APP_SECRET_KEY || 'changeme';
+export const port = process.env.PORT || 3000;
+export const secretKey = process.env.MY_APP_SECRET_KEY || 'changeme';
 ```
 
 This avoids repetition if you use the same variable in different places, and
@@ -105,7 +105,7 @@ needed:
 
 ```js
 // File: some other file
-import config from '../path/to/config';
+import * as config from '../path/to/config.js';
 server.listen(config.port);
 ```
 
@@ -358,7 +358,7 @@ router.delete('/:id', `loadPersonFromParams`, function(req, res, next) {
 [debug]: https://www.npmjs.com/package/debug
 [dotenv]: https://www.npmjs.com/package/dotenv
 [express]: https://expressjs.com
-[heroku]: https://heroku.com
+[render]: https://render.com/docs/configure-environment-variables#configuring-secrets-and-other-environment-information-on-render
 [log4js]: https://www.npmjs.com/package/log4js
 [mongoose]: http://mongoosejs.com
 [nightingale]: https://www.npmjs.com/package/nightingale

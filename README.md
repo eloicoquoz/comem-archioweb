@@ -51,7 +51,7 @@ This course is a [COMEM+][comem] web development course taught at
 
 * Creating a web service
   * [Express](https://mediacomem.github.io/comem-archioweb/2022-2023/subjects/express?home=MediaComem%2Fcomem-archioweb%23readme) web framework
-    * [*Exercises*](./exercises/express.md)
+    * [*Exercises*](./exercises/express.md) ([**solutions**](./exercises/express-solutions/routes))
   * [MongoDB](https://mediacomem.github.io/comem-archioweb/2022-2023/subjects/mongodb?home=MediaComem%2Fcomem-archioweb%23readme) document-oriented database
     * [*Guide:* install MongoDB](./guides/install-mongodb.md)
   * [Mongoose](https://mediacomem.github.io/comem-archioweb/2022-2023/subjects/mongoose?home=MediaComem%2Fcomem-archioweb%23readme) Object-Document Mapper
@@ -102,6 +102,7 @@ This course is a [COMEM+][comem] web development course taught at
 
 * [Architecture & source code management diagrams][diagrams]
 * [Demonstration REST API implemented with Express][demo-api] ([OpenAPI documentation][demo-api-openapi], [apiDoc documentation][demo-api-apidoc])
+* [Express.js API example written during class](https://github.com/MediaComem/comem-archioweb-2022-2023-express-api)
 * [Project suggestions](PROJECTS.md)
 
 **Other**
@@ -233,7 +234,7 @@ evaluation if implemented correctly. Here are some examples:
 
 * Implement a level 3 hypermedia API using a standard format such as
   [JSON:API][json-api] or [HAL+JSON][hal].
-* Implement "full" (90-100%) test coverage with automated tests.
+* Implement "full" (80-100%) test coverage with automated tests.
 
   Note that test coverage alone is useless. The tests must also make meaningful
   assertions.
@@ -360,7 +361,7 @@ the end of each subject.
 [cordova-plugins]: https://cordova.apache.org/docs/en/latest/#plugin-apis
 [demo-api]: https://github.com/MediaComem/comem-rest-demo
 [demo-api-apidoc]: https://mediacomem.github.io/comem-rest-demo/
-[demo-api-openapi]: https://comem-rest-demo.herokuapp.com/swagger/
+[demo-api-openapi]: https://mediacomem.github.io/comem-rest-demo/swagger/
 [diagrams]: diagrams.pdf
 [express]: https://expressjs.com
 [git-cheatsheet]: https://github.com/MediaComem/comem-webdev/blob/main/GIT-CHEATSHEET.md
