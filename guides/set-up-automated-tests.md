@@ -38,6 +38,7 @@ the following tools:
 - [Test fixtures](#test-fixtures)
 - [Am I testing every possible scenario?](#am-i-testing-every-possible-scenario)
 - [Optional: check your test coverage](#optional-check-your-test-coverage)
+- [Avoid problems with parallelism](#avoid-problems-with-parallelism)
 - [Tip](#tip)
 - [Documentation](#documentation)
 
@@ -86,12 +87,12 @@ test('should work', function() {
 
 To run these tests, you can use the `jest` command which comes with the npm
 package. The most convenient way to do it is to define a new `test` script in
-the `scripts` section of your `package.json`. Unfortunately, we need to add a `--experimental-vm-modules` in order to use Jest with ES Modules. 
+the `scripts` section of your `package.json`. Unfortunately, we need to add a `--experimental-vm-modules` in order to use Jest with ES Modules.
 
 ```json
 "scripts": {
   "...": "<PREVIOUS SCRIPTS HERE...>",
-  "test": "--experimental-vm-modules node_modules/.bin/jest"
+  "test": "node --experimental-vm-modules node_modules/.bin/jest"
 }
 ```
 
@@ -113,6 +114,15 @@ Time:        0.152 s, estimated 1 s
 Ran all test suites.
 ```
 
+If you are on Windows and are receiving unexpected errors, try editing the Jest path in your `package.json` script:
+
+
+```json
+"scripts": {
+  "...": "<PREVIOUS SCRIPTS HERE...>",
+  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+}
+```
 
 ## Your domain model & API
 
@@ -386,7 +396,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 ```
 
-Jest automatically sets our `NODE_ENV` environment variable to `test`. 
+Jest automatically sets our `NODE_ENV` environment variable to `test`.
 
 
 ## Add a unicity constraint to your model
@@ -494,22 +504,23 @@ Add the following assertions to your test after the SuperTest call chain:
 
 ```js
 // Check that the response body is a JSON object with exactly the properties we expect.
-expect(typeof res.body).toEqual('object');
-expect(typeof res.body._id).toEqual('string');
-expect(res.body.name).toEqual('John Doe');
 expect(res.body).toEqual(
   expect.objectContaining({
     _id: expect.any(String),
-    name: expect.any(String)
+    name: 'John Doe'
   })
 );
 ```
 
 ## Add some matchers to Jest with jest-extended
 
-Jest has [many matchers][jest-matchers]. However, as you can see, checking an object's keys can be a bit convoluted. Fortunately, we can use the [jest-extended][jest-extended] package to add plenty of cleaner methods to our test suite. 
+Jest has [many matchers][jest-matchers]. However, as you can see, checking an
+object's keys can be a bit convoluted. Fortunately, we can use the
+[jest-extended][jest-extended] package to add plenty of cleaner methods to our
+test suite.
 
 Install jest-extended:
+
 ```bash
 npm install --save-dev jest-extended
 ```
@@ -541,7 +552,7 @@ check important headers, check the response body.
 > further, you could check the exact format of that ID with
 > `expect(res.body._id).toMatch(/^[0-9a-f]{24}$/)` (for MongoDB IDs).
 >
-> Also note the `expect(res.body).toContainAllKeys('_id', 'name')` assertion.
+> Also note the `expect(res.body).toContainAllKeys(['_id', 'name'])` assertion.
 > You have an assertion to check the ID and another to check the name, but it's
 > also important to check that the body does not contain other properties you
 > were not expecting. That way, when you add more properties to your schema, the
@@ -554,7 +565,7 @@ check important headers, check the response body.
 > or modify the assertions in your test to take it into account.
 >
 > If you wanted to go further, you could also check that the created user has
-> actually been saved to the database. There could conceivable be a bug where
+> actually been saved to the database. There could conceivably be a bug where
 > the API gives you the correct answer even though it saved something slightly
 > different to the database (or did not save it at all).
 
@@ -562,8 +573,8 @@ check important headers, check the response body.
 
 ## Write a second test
 
-Let's test the application's other route. **Modify the `it('should retrieve the
-list of users')` call** to add the test function. It should look like this:
+Let's test the application's other route. **Modify the `test('should retrieve
+the list of users')` call** to add the test function. It should look like this:
 
 ```js
 describe('GET /users', function() {
@@ -601,8 +612,8 @@ route during this course's previous tutorials, the test will fail because the
 request is not properly authenticated. You must send a valid bearer token in the
 `Authorization` header.
 
-Add this function somewhere in the test file outside the `describe` blocks. You
-can use it later to generate a valid token. You can add the following function in `spec/utils.js`:
+Here's a function you will be able to use later to generate a valid token. You
+can add it to `spec/utils.js`:
 
 ```js
 import jwt from "jsonwebtoken"
@@ -658,16 +669,14 @@ Here's how it should look like:
 
 ```js
 describe('GET /users', function() {
-  let user;
+  let johnDoe;
+  let janeDoe;
   beforeEach(async function() {
     // Create 2 users before retrieving the list.
-    const users = await Promise.all([
+    [ johnDoe, janeDoe ] = await Promise.all([
       User.create({ name: 'John Doe' }),
       User.create({ name: 'Jane Doe' })
     ]);
-
-    // Retrieve a user to authenticate as.
-    user = users[0];
   });
 
   test('should retrieve the list of users', async function() {
@@ -676,7 +685,7 @@ describe('GET /users', function() {
 });
 ```
 
-If the `GET /users` route requires authentication, first import the `generateValidJwt` function from your `utils.js` file: 
+If the `GET /users` route requires authentication, first import the `generateValidJwt` function from your `utils.js` file:
 
 ```js
 import { cleanUpDatabase, generateValidJwt } from "./utils.js"
@@ -686,7 +695,7 @@ include a valid `Authorization` header with SuperTest's `set` method:
 
 
 ```js
-const token = await generateValidJwt(user);
+const token = await generateValidJwt(johnDoe);
 const res = await supertest(app)
   .get('/users')
   .set('Authorization', `Bearer ${token}`)
@@ -702,7 +711,7 @@ has 2 users:
 
 ```bash
 $> npm test
-> express-api@0.0.0 test 
+> express-api@0.0.0 test
  FAIL  spec/users.spec.js
   POST /users
     ✓ should create a user (121 ms)
@@ -733,12 +742,12 @@ expect:
 
 ```js
 expect(res.body[0]).toBeObject();
-expect(res.body[0]._id).toBeString();
+expect(res.body[0]._id).toEqual(janeDoe.id);
 expect(res.body[0].name).toEqual('Jane Doe');
 expect(res.body[0]).toContainAllKeys(['_id', 'name']);
 
 expect(res.body[1]).toBeObject();
-expect(res.body[1]._id).toBeString();
+expect(res.body[1]._id).toEqual(johnDoe.id);
 expect(res.body[1].name).toEqual('John Doe');
 expect(res.body[1]).toContainAllKeys(['_id', 'name']);
 ```
@@ -791,7 +800,7 @@ right after the `jest` command:
 ```json
 "scripts": {
   "...": "<PREVIOUS SCRIPTS HERE...>",
-  "test": "cross-env LOCAL_MONGODB_URI=mongodb://localhost/my-app-test node --experimental-vm-modules node_modules/.bin/jest --coverage"
+  "test": "cross-env DATABASE_URL=mongodb://localhost/my-app-test node --experimental-vm-modules node_modules/.bin/jest --coverage"
 }
 ```
 
@@ -807,6 +816,51 @@ of your code are covered by your automated tests, and which are not.
 
 It is not always possible to achieve 100% coverage, but generally the higher
 your coverage, the better chance you have of catching bugs or breaking changes.
+
+
+
+## Avoid problems with parallelism
+
+Once you start writing multiple test files, you may run into parallelism issues.
+Some of your tests may become
+["flaky"](https://docs.gitlab.com/ee/development/testing_guide/flaky_tests.html),
+i.e. they sometimes pass, sometimes fail, due to no apparent reason.
+
+By default, Jest runs the tests in one file sequentially (i.e. one by one), but
+[it runs multiple test files in
+parallel](https://freecontent.manning.com/the-value-of-concurrency-in-tests/).
+
+This is a problem since we decided to wipe the database clean before every test.
+This means that a test in file A might clean the database at the same time a
+test in file B is executing, deleting B's test fixtures.
+
+To avoid this problem, add [the `--runInBand` option][jest-run-in-band] to the
+Jest command to instruct it to run all tests sequentially (i.e. one by one):
+
+```json
+"scripts": {
+  "...": "<PREVIOUS SCRIPTS HERE...>",
+  "test": "cross-env DATABASE_URL=mongodb://localhost/my-app-test node --experimental-vm-modules node_modules/.bin/jest --coverage --runInBand"
+}
+```
+
+> Note that this will have the effect of slowing down your test suite, since
+> tests which were running in parallel before will now have to execute one by
+> one.
+>
+> In you have a very large test suite in a real-world project, it may become too
+> slow, and you may have to switch to the other solution, i.e. generating random
+> data for each test to avoid collisions instead of wiping the database. That
+> way you can remove the `--runInBand` option and run tests in parallel again.
+>
+> Some test frameworks also provide an alternative solution called
+> **transactional testing**, where each test is wrapped in a transaction so that
+> it only sees its own changes. Then the transaction is rolled back at the end
+> of the test so that no changes are actually persisted that can affect other
+> tests. Frameworks such as [Ruby on
+> Rails](https://guides.rubyonrails.org/testing.html#testing-parallel-transactions)
+> or [Ecto for Elixir](https://hexdocs.pm/ecto/testing-with-ecto.html) offer
+> this feature.
 
 
 
@@ -852,7 +906,8 @@ your coverage, the better chance you have of catching bugs or breaking changes.
 [jest-matchers]: https://jestjs.io/docs/expect
 [jest-extended]: https://jest-extended.jestcommunity.dev/docs/matchers/
 [jest-test]: https://jestjs.io/docs/api#testname-fn-timeout
-[jest-hooks]:https://jestjs.io/docs/setup-teardown
+[jest-hooks]: https://jestjs.io/docs/setup-teardown
+[jest-run-in-band]: https://jestjs.io/docs/cli#--runinband
 [mongo]: https://www.mongodb.com
 [mongoose]: https://mongoosejs.com
 [node]: https://nodejs.org
